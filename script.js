@@ -1,5 +1,5 @@
-const CELL_SIZE = 50;
-const WORLD_SIZE = 100;
+const CELL_SIZE = 8;
+const WORLD_SIZE = 800;
 const SPOTS = WORLD_SIZE / CELL_SIZE;
 
 class Rules {
@@ -15,12 +15,14 @@ class DeadCell {
     this.type = "";
     this.color = `rgba(0,0,0,1)`;
     this.rules = new Rules(
-            Infinity,
-            Infinity,
-            [],
-          );
+      Infinity,
+      Infinity,
+      [],
+    );
     this.x = x;
     this.y = y;
+    this.lifetime = 0;
+    this.foodTime = 0;
   }
 
   foodAround(_cellsAround) {
@@ -32,16 +34,45 @@ class DeadCell {
   }
 }
 
+class GoodCell extends DeadCell {
+  constructor(x, y) {
+    super(x, y);
+    this.type = "good";
+    this.color = "rgba(255,0,0,1)";
+    this.rules = new Rules(
+      5,
+      3,
+      ["bad"],
+    );
+  }
 
-class LiveCell extends DeadCell {
+  foodAround(cellsAround) {
+    for (let i = 0; i < cellsAround.length; i++) {
+      if (this.rules.foodTypes.contains(typeof (c))) {
+        return [cellsAround.x, cellsAround.y];
+      }
+    }
+
+    return [];
+  }
+
+  check() {
+    if (this.lifetime >= this.rules.lifespan) {
+      return false;
+    } else if (this.foodTime >= this.rules.foodSpan) {
+      return false;
+    }
+
+    return true;
+  }
+}
+
+class CustomLiveCell extends DeadCell {
   constructor(type, color, rules, x, y) {
     super(x, y);
     this.type = type;
     this.color = color;
     this.rules = rules;
-
-    this.lifetime = 0;
-    this.foodTime = 0;
   }
 
   foodAround(cellsAround) {
@@ -91,12 +122,12 @@ class World {
         const green = getRandomIntBetween(0, 255);
         const blue = getRandomIntBetween(0, 255);
         const alpha = 1;
-        const cell = new LiveCell(
+        const cell = new CustomLiveCell(
           getRandomElement(["a", "b", "c", "d"]),
           `rgba(${red},${green},${blue},${alpha})`,
           new Rules(
-            getRandomIntBetween(0, 10),
-            getRandomIntBetween(0, 10),
+            getRandomIntBetween(0, 20),
+            getRandomIntBetween(0, 20),
             [],
           ), i, j);
         this.cells.push(cell);
@@ -116,7 +147,7 @@ class World {
           this.naturalSelection(this.cells[i], c);
           this.cells[i].foodTime = 0;
         }
-        // this.cells[i].lifetime++;
+        this.cells[i].lifetime++;
       }
     }
   }
